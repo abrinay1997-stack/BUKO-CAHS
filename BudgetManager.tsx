@@ -53,7 +53,7 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({ isOpen, onClose }) => {
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-slate-400"><X size={20} /></button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar overscroll-contain">
+                <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-6 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                     {/* Add Budget Form */}
                     {categoriesWithoutBudget.length > 0 && (
                         <form onSubmit={handleSave} className="bg-slate-800/40 p-4 rounded-xl border border-white/5 space-y-3">

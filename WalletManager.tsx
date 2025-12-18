@@ -114,7 +114,7 @@ const WalletManager: React.FC<WalletManagerProps> = ({ isOpen, onClose }) => {
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto min-h-0 p-5 space-y-4 custom-scrollbar overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                     {!showAddWallet ? (
                          <button 
                             onClick={() => setShowAddWallet(true)}

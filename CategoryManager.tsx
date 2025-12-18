@@ -134,9 +134,10 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ isOpen, onClose }) =>
                 </div>
 
                 {/* Contenido con Scroll Aislado */}
-                <div 
+                <div
                     ref={scrollRef}
-                    className="flex-1 overflow-y-auto overscroll-contain px-8 py-4 space-y-10 custom-scrollbar pb-12"
+                    className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-8 py-4 space-y-10 pb-12"
+                    style={{ WebkitOverflowScrolling: 'touch' }}
                 >
                     {/* Botón de Inserción Atómica */}
                     {!isCreating ? (
