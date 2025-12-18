@@ -103,7 +103,7 @@ const WalletManager: React.FC<WalletManagerProps> = ({ isOpen, onClose }) => {
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
             
-            <GlassCard className="w-full max-w-md max-h-[85vh] flex flex-col relative bg-slate-900 shadow-2xl overflow-hidden border-white/10">
+            <GlassCard className="w-full max-w-md max-h-[85vh] flex flex-col relative bg-slate-900 shadow-2xl border-white/10">
                 <div className="flex justify-between items-center p-5 border-b border-white/5 shrink-0 bg-slate-900/80 backdrop-blur-xl z-20">
                     <div className="flex items-center gap-3 text-white">
                         <Landmark size={20} className="text-cyan-400" />

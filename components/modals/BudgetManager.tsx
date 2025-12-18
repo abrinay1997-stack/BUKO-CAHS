@@ -44,7 +44,7 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({ isOpen, onClose }) => {
     return createPortal(
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <GlassCard className="w-full max-w-md max-h-[85dvh] flex flex-col relative bg-slate-900 shadow-2xl overflow-hidden">
+            <GlassCard className="w-full max-w-md max-h-[85dvh] flex flex-col relative bg-slate-900 shadow-2xl">
                 <div className="flex justify-between items-center p-4 border-b border-white/5 bg-slate-900/50 backdrop-blur-md shrink-0">
                     <div className="flex items-center gap-2 text-white">
                         <Target size={20} className="text-cyan-400" />

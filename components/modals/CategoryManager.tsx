@@ -98,7 +98,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ isOpen, onClose }) =>
                 onClick={onClose} 
             />
             
-            <GlassCard className="w-full max-w-lg h-[80vh] flex flex-col relative bg-slate-900 border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] rounded-[2.5rem] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 overflow-hidden">
+            <GlassCard className="w-full max-w-lg h-[80vh] flex flex-col relative bg-slate-900 border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] rounded-[2.5rem] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
                 
                 {/* Header Atómico */}
                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-slate-900/40 backdrop-blur-2xl z-20 shrink-0">
