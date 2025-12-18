@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Transaction, Wallet, Category, RecurringRule, Budget, INITIAL_CATEGORIES, INITIAL_WALLETS } from '../types';
 import { generateId, sanitizeAmount } from '../utils/formatting';
-import { applyTransactionToWallets, revertTransactionFromWallets, processRecurringRules } from '../services/financeCore';
+import { applyTransactionToWallets, revertTransactionFromWallets, processRecurringRules } from '../utils/financeCore';
 
 interface StoreState {
   user: any | null;

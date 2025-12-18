@@ -4,7 +4,7 @@ import { Lock, Delete, ShieldCheck, AlertCircle, Fingerprint } from 'lucide-reac
 import GlassCard from './ui/GlassCard';
 import { cn } from '../utils/formatting';
 import { useStore } from '../store/useStore';
-import { authenticateBiometrics } from '../services/biometrics';
+import { authenticateBiometrics } from '../utils/biometrics';
 
 interface SecurityLockProps {
   savedPin: string;
