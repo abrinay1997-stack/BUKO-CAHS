@@ -1,145 +1,313 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Target, Plus, Trash, AlertCircle } from 'lucide-react';
+import { X, Plus, Trash2, PiggyBank, Edit2, Check, TrendingUp } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import GlassCard from '../ui/GlassCard';
-import { cn, formatCurrency } from '../../utils/formatting';
 
 interface BudgetManagerProps {
-    isOpen: boolean;
-    onClose: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const BudgetManager: React.FC<BudgetManagerProps> = ({ isOpen, onClose }) => {
-    const { budgets, categories, transactions, setBudget, deleteBudget } = useStore();
-    const [selectedCatId, setSelectedCatId] = useState('');
-    const [amount, setAmount] = useState('');
+  const { budgets, categories, transactions, setBudget, deleteBudget } = useStore();
 
-    useEffect(() => {
-        if (isOpen) document.body.style.overflow = 'hidden';
-        else document.body.style.overflow = 'unset';
-        return () => { document.body.style.overflow = 'unset'; };
-    }, [isOpen]);
+  const [categoryId, setCategoryId] = useState('');
+  const [amount, setAmount] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editAmount, setEditAmount] = useState('');
 
-    if (!isOpen) return null;
+  if (!isOpen) return null;
 
-    const expenseCategories = categories.filter(c => c.type === 'expense');
-    const categoriesWithoutBudget = expenseCategories.filter(c => !budgets.some(b => b.categoryId === c.id));
+  // Get categories available for budgeting (expense categories without budgets)
+  const availableCategories = categories.filter(
+    (cat) => cat.type === 'expense' && !budgets.some((b) => b.categoryId === cat.id)
+  );
 
-    const handleSave = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedCatId || !amount) return;
-        setBudget(selectedCatId, parseFloat(amount));
-        setSelectedCatId('');
-        setAmount('');
-    };
-
-    // Calculate current spending for existing budgets
+  // Calculate spending for each budget
+  const budgetsWithSpending = useMemo(() => {
     const now = new Date();
-    const currentMonthTxs = transactions.filter(t => {
-        const d = new Date(t.date);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.type === 'expense';
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+    return budgets.map((budget) => {
+      const category = categories.find((c) => c.id === budget.categoryId);
+      const spent = transactions
+        .filter((t) => {
+          const txDate = new Date(t.date);
+          return (
+            t.categoryId === budget.categoryId &&
+            t.type === 'expense' &&
+            txDate >= startOfMonth &&
+            txDate <= endOfMonth
+          );
+        })
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const remaining = budget.amount - spent;
+      const percentage = Math.min((spent / budget.amount) * 100, 100);
+
+      return {
+        ...budget,
+        categoryName: category?.name || 'Desconocida',
+        categoryColor: category?.color || 'text-slate-400',
+        spent,
+        remaining,
+        percentage,
+        isOverBudget: spent > budget.amount,
+      };
     });
+  }, [budgets, categories, transactions]);
 
-    return createPortal(
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} style={{ touchAction: 'none' }} />
-            <GlassCard className="w-full max-w-md max-h-[85dvh] flex flex-col relative bg-slate-900 shadow-2xl overflow-hidden">
-                <div className="flex justify-between items-center p-4 border-b border-white/5 bg-slate-900/50 backdrop-blur-md shrink-0">
-                    <div className="flex items-center gap-2 text-white">
-                        <Target size={20} className="text-cyan-400" />
-                        <h2 className="text-lg font-bold">Presupuestos Mensuales</h2>
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryId || !amount) return;
+
+    const budgetAmount = parseFloat(amount);
+    if (budgetAmount <= 0) return;
+
+    setBudget(categoryId, budgetAmount);
+
+    setCategoryId('');
+    setAmount('');
+    setShowForm(false);
+  };
+
+  const handleEdit = (budget: typeof budgetsWithSpending[0]) => {
+    setEditingId(budget.id);
+    setEditAmount(budget.amount.toString());
+  };
+
+  const handleSaveEdit = (budget: typeof budgetsWithSpending[0]) => {
+    const newAmount = parseFloat(editAmount);
+    if (!newAmount || newAmount <= 0) return;
+
+    setBudget(budget.categoryId, newAmount);
+    setEditingId(null);
+  };
+
+  const handleDelete = (id: string, categoryName: string) => {
+    if (confirm(`¿Eliminar presupuesto para "${categoryName}"?`)) {
+      deleteBudget(id);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-DO', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="w-full max-w-lg bg-slate-900 rounded-3xl shadow-2xl flex flex-col max-h-[85vh] border border-white/10"
+        onClick={(e) => e.stopPropagation()}
+      >
+
+        {/* Header - Fixed */}
+        <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
+          <h2 className="text-xl font-bold text-white">Presupuestos</h2>
+          <button
+            onClick={onClose}
+            type="button"
+            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <X size={20} className="text-white" />
+          </button>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6" style={{ minHeight: 0 }}>
+
+          {/* Add Button */}
+          {!showForm && availableCategories.length > 0 && (
+            <button
+              onClick={() => setShowForm(true)}
+              type="button"
+              className="w-full py-4 border-2 border-dashed border-white/10 rounded-2xl text-slate-400 hover:text-white hover:border-white/30 transition-all flex items-center justify-center gap-2 font-medium"
+            >
+              <Plus size={18} /> Nuevo Presupuesto
+            </button>
+          )}
+
+          {/* No categories available message */}
+          {availableCategories.length === 0 && !showForm && budgets.length === 0 && (
+            <div className="text-center py-8">
+              <PiggyBank size={48} className="text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-400 text-sm">
+                Crea categorías de gastos primero para establecer presupuestos
+              </p>
+            </div>
+          )}
+
+          {/* Add Form */}
+          {showForm && (
+            <form onSubmit={handleSubmit} className="bg-slate-800/50 p-5 rounded-2xl border border-cyan-500/30 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-cyan-400">Nuevo Presupuesto</span>
+                <button type="button" onClick={() => setShowForm(false)} className="text-slate-500 hover:text-white">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-cyan-500 transition-colors"
+                required
+              >
+                <option value="">Selecciona una categoría...</option>
+                {availableCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Monto mensual..."
+                className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-cyan-500 transition-colors"
+                required
+              />
+
+              <button
+                type="submit"
+                disabled={!categoryId || !amount}
+                className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-3 rounded-xl transition-all"
+              >
+                Crear Presupuesto
+              </button>
+            </form>
+          )}
+
+          {/* Budgets List */}
+          {budgetsWithSpending.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold text-cyan-400 uppercase tracking-wider px-2">
+                Presupuestos Mensuales ({budgetsWithSpending.length})
+              </h3>
+              {budgetsWithSpending.map((budget) => (
+                <div
+                  key={budget.id}
+                  className="p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors group"
+                >
+                  {editingId === budget.id ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 mb-2">
+                        <PiggyBank size={16} className={budget.categoryColor} />
+                        <span className="text-white font-medium text-sm">{budget.categoryName}</span>
+                      </div>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        value={editAmount}
+                        onChange={(e) => setEditAmount(e.target.value)}
+                        className="w-full bg-slate-950 border border-white/10 rounded-xl p-2 text-white outline-none focus:border-cyan-500 transition-colors text-sm"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleSaveEdit(budget)}
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl transition-all text-sm flex items-center justify-center gap-2"
+                        >
+                          <Check size={14} /> Guardar
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl transition-all text-sm"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-slate-400" type="button"><X size={20} /></button>
-                </div>
-
-                <div className="flex-1 overflow-y-scroll p-4 space-y-6 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch', minHeight: 0 }}>
-                    {/* Add Budget Form */}
-                    {categoriesWithoutBudget.length > 0 && (
-                        <form onSubmit={handleSave} className="bg-slate-800/40 p-4 rounded-xl border border-white/5 space-y-3">
-                            <p className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Establecer Nuevo Límite</p>
-                            <div className="grid grid-cols-2 gap-2">
-                                <select 
-                                    value={selectedCatId}
-                                    onChange={e => setSelectedCatId(e.target.value)}
-                                    className="bg-slate-900 border border-slate-700 text-white text-sm rounded-lg p-2.5 outline-none focus:border-cyan-500"
-                                >
-                                    <option value="">Categoría...</option>
-                                    {categoriesWithoutBudget.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                                <input 
-                                    type="number"
-                                    placeholder="Monto Mensual"
-                                    value={amount}
-                                    onChange={e => setAmount(e.target.value)}
-                                    className="bg-slate-900 border border-slate-700 text-white text-sm rounded-lg p-2.5 outline-none focus:border-cyan-500"
-                                />
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-purple-500/20 rounded-lg">
+                            <PiggyBank size={18} className="text-purple-400" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-medium">{budget.categoryName}</span>
                             </div>
-                            <button type="submit" className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2.5 rounded-lg text-xs transition-all flex items-center justify-center gap-2">
-                                <Plus size={14} /> Activar Presupuesto
-                            </button>
-                        </form>
-                    )}
+                            <div className="flex items-center gap-2 text-xs mt-1">
+                              <span className="text-slate-400">
+                                {formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                          <button
+                            onClick={() => handleEdit(budget)}
+                            type="button"
+                            className="p-2 text-slate-600 hover:text-cyan-400 transition-colors"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(budget.id, budget.categoryName)}
+                            type="button"
+                            className="p-2 text-slate-600 hover:text-rose-400 transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
 
-                    {/* Active Budgets List */}
-                    <div className="space-y-4">
-                        <h3 className="text-xs font-bold text-slate-500 uppercase px-1">Presupuestos Activos</h3>
-                        {budgets.length === 0 ? (
-                            <p className="text-center py-10 text-slate-600 text-sm italic">No has definido límites de gastos.</p>
-                        ) : (
-                            budgets.map(budget => {
-                                const cat = categories.find(c => c.id === budget.categoryId);
-                                const spent = currentMonthTxs.filter(t => t.categoryId === budget.categoryId).reduce((s, t) => s + t.amount, 0);
-                                const percent = Math.min((spent / budget.amount) * 100, 100);
-                                const isOver = spent > budget.amount;
-
-                                return (
-                                    <div key={budget.id} className="p-4 rounded-xl bg-slate-800/40 border border-white/5 space-y-3">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-bold text-slate-100 text-sm">{cat?.name}</p>
-                                                <p className="text-[10px] text-slate-500">Límite: {formatCurrency(budget.amount)}</p>
-                                            </div>
-                                            <button onClick={() => deleteBudget(budget.id)} className="p-1.5 text-slate-600 hover:text-rose-400 transition-colors">
-                                                <Trash size={14} />
-                                            </button>
-                                        </div>
-                                        
-                                        <div className="space-y-1">
-                                            <div className="flex justify-between text-[10px] font-mono">
-                                                <span className={cn(isOver ? "text-rose-400" : "text-slate-400")}>
-                                                    Gastado: {formatCurrency(spent)}
-                                                </span>
-                                                <span className={cn(isOver ? "text-rose-400" : spent > budget.amount * 0.8 ? "text-yellow-400" : "text-emerald-400")}>
-                                                    {Math.round((spent/budget.amount)*100)}%
-                                                </span>
-                                            </div>
-                                            <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5">
-                                                <div 
-                                                    className={cn(
-                                                        "h-full transition-all duration-1000",
-                                                        isOver ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" : 
-                                                        percent > 80 ? "bg-yellow-500" : "bg-emerald-500"
-                                                    )}
-                                                    style={{ width: `${percent}%` }}
-                                                />
-                                            </div>
-                                            {isOver && (
-                                                <div className="flex items-center gap-1 text-[9px] text-rose-400 font-bold animate-pulse">
-                                                    <AlertCircle size={10} /> EXCEDIDO POR {formatCurrency(spent - budget.amount)}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        )}
-                    </div>
+                      {/* Progress Bar */}
+                      <div className="space-y-2">
+                        <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              budget.isOverBudget
+                                ? 'bg-rose-500'
+                                : budget.percentage > 80
+                                ? 'bg-amber-500'
+                                : 'bg-emerald-500'
+                            }`}
+                            style={{ width: `${Math.min(budget.percentage, 100)}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span
+                            className={
+                              budget.isOverBudget
+                                ? 'text-rose-400 font-bold'
+                                : budget.remaining < budget.amount * 0.2
+                                ? 'text-amber-400'
+                                : 'text-emerald-400'
+                            }
+                          >
+                            {budget.isOverBudget ? (
+                              <>Excedido por {formatCurrency(Math.abs(budget.remaining))}</>
+                            ) : (
+                              <>Restante: {formatCurrency(budget.remaining)}</>
+                            )}
+                          </span>
+                          <span className="text-slate-500">{budget.percentage.toFixed(0)}%</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
-            </GlassCard>
-        </div>,
-        document.body
-    );
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
 };
 
 export default BudgetManager;
