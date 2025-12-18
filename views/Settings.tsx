@@ -4,12 +4,12 @@ import { useStore } from '../store/useStore';
 import GlassCard from '../components/ui/GlassCard';
 import { Trash, AlertTriangle, FileSpreadsheet, Lock, Unlock, Tag, Wallet, ChevronRight, Target, Cloud, UserCircle, LogOut, Fingerprint, Activity } from 'lucide-react';
 import { generateCSV, cn } from '../utils/formatting';
-import WalletManager from '../components/settings/WalletManager';
-import CategoryManager from '../components/settings/CategoryManager';
-import BudgetManager from '../components/settings/BudgetManager';
+import WalletManager from '../components/modals/WalletManager';
+import CategoryManager from '../components/modals/CategoryManager';
+import BudgetManager from '../components/modals/BudgetManager';
 import SecurityLock from '../components/SecurityLock';
-import SpeedTestModal from '../components/SpeedTestModal';
-import { isBiometricsSupported, registerBiometrics } from '../services/biometrics';
+import SpeedTestModal from '../components/modals/SpeedTestModal';
+import { isBiometricsSupported, registerBiometrics } from '../utils/biometrics';
 
 const Settings: React.FC = () => {
   const { resetStore, wallets, transactions, categories, budgets, securityPin, setSecurityPin, user, isBiometricsEnabled, setBiometricsEnabled } = useStore();

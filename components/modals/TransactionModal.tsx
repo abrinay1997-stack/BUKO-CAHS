@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Save, Briefcase, Repeat, Trash2, Delete, Check, Clock, Zap, BellRing } from 'lucide-react';
-import { TransactionType, Frequency, Transaction } from '../types';
-import GlassCard from './ui/GlassCard';
-import { cn } from '../utils/formatting';
-import { useTransactionForm } from '../hooks/useTransactionForm';
+import { TransactionType, Frequency, Transaction } from '../../types';
+import GlassCard from '../ui/GlassCard';
+import { cn } from '../../utils/formatting';
+import { useTransactionForm } from '../../hooks/useTransactionForm';
 
 interface TransactionModalProps {
   isOpen: boolean;

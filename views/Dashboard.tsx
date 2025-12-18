@@ -1,13 +1,13 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import GlassCard from '../components/ui/GlassCard';
-import TransactionModal from '../components/TransactionModal';
+import TransactionModal from '../components/modals/TransactionModal';
 import { formatCurrency, formatDate, cn } from '../utils/formatting';
 import { Plus, TrendingUp, TrendingDown, CalendarDays, Briefcase, Landmark, ArrowRightLeft, ChevronLeft, ChevronRight, Loader2, Clock, BellRing, ShieldCheck, Check, Cloud, RefreshCw, WifiOff, Filter, ArrowUpRight, Target, Zap } from 'lucide-react';
 import { Transaction, RecurringRule } from '../types';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useStore } from '../store/useStore';
-import { calculateSafeToSpend, getUpcomingActionItems, calculateNextDueDate, getFinancialHealthMetrics } from '../services/financeCore';
+import { calculateSafeToSpend, getUpcomingActionItems, calculateNextDueDate, getFinancialHealthMetrics } from '../utils/financeCore';
 
 const Dashboard: React.FC = () => {
   const {

@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Zap, X, Globe, Signal, RefreshCcw, Wifi, Server, CheckCircle2 } from 'lucide-react';
-import GlassCard from './ui/GlassCard';
-import { cn } from '../utils/formatting';
+import GlassCard from '../ui/GlassCard';
+import { cn } from '../../utils/formatting';
 
 interface SpeedTestModalProps {
     isOpen: boolean;
