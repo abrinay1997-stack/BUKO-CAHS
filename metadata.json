@@ -1,0 +1,9 @@
+
+{
+  "name": "BukoCash",
+  "description": "A mobile-first, glassmorphic personal finance PWA built for managing recurring expenses and budget tracking.",
+  "requestFramePermissions": [
+    "publickey-credentials-create",
+    "publickey-credentials-get"
+  ]
+}
