@@ -43,17 +43,17 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({ isOpen, onClose }) => {
 
     return createPortal(
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <GlassCard className="w-full max-w-md max-h-[85dvh] flex flex-col relative bg-slate-900 shadow-2xl">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} style={{ touchAction: 'none' }} />
+            <GlassCard className="w-full max-w-md max-h-[85dvh] flex flex-col relative bg-slate-900 shadow-2xl overflow-hidden">
                 <div className="flex justify-between items-center p-4 border-b border-white/5 bg-slate-900/50 backdrop-blur-md shrink-0">
                     <div className="flex items-center gap-2 text-white">
                         <Target size={20} className="text-cyan-400" />
                         <h2 className="text-lg font-bold">Presupuestos Mensuales</h2>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-slate-400"><X size={20} /></button>
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-slate-400" type="button"><X size={20} /></button>
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-6 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="flex-1 overflow-y-scroll p-4 space-y-6 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch', minHeight: 0 }}>
                     {/* Add Budget Form */}
                     {categoriesWithoutBudget.length > 0 && (
                         <form onSubmit={handleSave} className="bg-slate-800/40 p-4 rounded-xl border border-white/5 space-y-3">
