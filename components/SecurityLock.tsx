@@ -14,18 +14,23 @@ interface SecurityLockProps {
   onCancelSetup?: () => void;
 }
 
-const SecurityLock: React.FC<SecurityLockProps> = ({ 
-    savedPin, 
-    onUnlock, 
-    isSettingUp = false, 
+const SecurityLock: React.FC<SecurityLockProps> = ({
+    savedPin,
+    onUnlock,
+    isSettingUp = false,
     onSetupComplete,
-    onCancelSetup 
+    onCancelSetup
 }) => {
   const { isBiometricsEnabled } = useStore();
   const [input, setInput] = useState('');
   const [error, setError] = useState(false);
   const [confirmStep, setConfirmStep] = useState(false);
   const [firstPin, setFirstPin] = useState('');
+
+  // BUG FIX #6: PIN Security Lockout
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
 
   useEffect(() => {
     if (error) {
@@ -36,6 +41,24 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
         return () => clearTimeout(timer);
     }
   }, [error]);
+
+  // BUG FIX #6: Update remaining lockout time every second
+  useEffect(() => {
+    if (!lockedUntil) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      if (now >= lockedUntil) {
+        setLockedUntil(null);
+        setRemainingSeconds(0);
+        setFailedAttempts(0);
+      } else {
+        setRemainingSeconds(Math.ceil((lockedUntil - now) / 1000));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [lockedUntil]);
 
   // Auto-invoke biometrics if enabled and not setting up
   useEffect(() => {
@@ -82,10 +105,31 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
               }
           }
       } else {
+          // BUG FIX #6: Check if locked before validating PIN
+          if (lockedUntil && Date.now() < lockedUntil) {
+              alert(`Demasiados intentos fallidos. Bloqueado por ${remainingSeconds} segundos.`);
+              setInput('');
+              return;
+          }
+
           if (pin === savedPin) {
+              // Success: reset attempts and unlock
+              setFailedAttempts(0);
+              setLockedUntil(null);
               onUnlock();
           } else {
+              // Failed attempt
+              const newAttempts = failedAttempts + 1;
+              setFailedAttempts(newAttempts);
               setError(true);
+
+              if (newAttempts >= 3) {
+                  // Lock for 5 minutes after 3 failed attempts
+                  const lockTime = Date.now() + (5 * 60 * 1000);
+                  setLockedUntil(lockTime);
+                  setRemainingSeconds(300);
+                  alert('Demasiados intentos fallidos. Bloqueado por 5 minutos.');
+              }
           }
       }
   };
@@ -109,9 +153,13 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
                     : 'BukoCash Protegido'}
             </h2>
             <p className="text-sm text-slate-400">
-                {isSettingUp 
-                    ? 'Protege tus finanzas de miradas ajenas' 
-                    : 'Ingresa tu PIN para continuar'}
+                {isSettingUp
+                    ? 'Protege tus finanzas de miradas ajenas'
+                    : lockedUntil && Date.now() < lockedUntil
+                      ? `Bloqueado por ${remainingSeconds}s`
+                      : failedAttempts > 0
+                        ? `Intentos restantes: ${3 - failedAttempts}`
+                        : 'Ingresa tu PIN para continuar'}
             </p>
         </div>
 
@@ -131,16 +179,18 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
 
         <div className="grid grid-cols-3 gap-4 w-full max-w-xs">
             {keys.map((k) => {
+                const isLocked = lockedUntil && Date.now() < lockedUntil;
+
                 if (k === 'bio') {
                   return (
-                    <button 
+                    <button
                         key="bio"
                         onClick={handleBiometricAuth}
-                        disabled={!isBiometricsEnabled || isSettingUp}
+                        disabled={!isBiometricsEnabled || isSettingUp || isLocked}
                         className={cn(
                           "h-16 flex items-center justify-center rounded-full transition-all",
-                          isBiometricsEnabled && !isSettingUp 
-                            ? "text-cyan-400 bg-cyan-500/5 border border-cyan-500/20 hover:bg-cyan-500/10 active:scale-90" 
+                          isBiometricsEnabled && !isSettingUp && !isLocked
+                            ? "text-cyan-400 bg-cyan-500/5 border border-cyan-500/20 hover:bg-cyan-500/10 active:scale-90"
                             : "text-slate-700 opacity-20 pointer-events-none"
                         )}
                     >
@@ -149,10 +199,16 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
                   );
                 }
                 if (k === 'del') return (
-                    <button 
+                    <button
                         key="del"
                         onClick={handleDelete}
-                        className="h-16 flex items-center justify-center rounded-full text-slate-400 hover:bg-white/5 active:bg-white/10 transition-colors"
+                        disabled={isLocked}
+                        className={cn(
+                          "h-16 flex items-center justify-center rounded-full transition-colors",
+                          isLocked
+                            ? "text-slate-700 opacity-20 pointer-events-none"
+                            : "text-slate-400 hover:bg-white/5 active:bg-white/10"
+                        )}
                     >
                         <Delete size={24} />
                     </button>
@@ -161,7 +217,13 @@ const SecurityLock: React.FC<SecurityLockProps> = ({
                     <button
                         key={k}
                         onClick={() => handlePress(k)}
-                        className="h-16 rounded-full bg-slate-800/40 border border-white/5 text-2xl font-medium text-white hover:bg-slate-700 active:bg-cyan-500/20 active:border-cyan-500/50 transition-all"
+                        disabled={isLocked}
+                        className={cn(
+                          "h-16 rounded-full text-2xl font-medium transition-all",
+                          isLocked
+                            ? "bg-slate-800/20 border border-white/5 text-slate-700 opacity-20 pointer-events-none"
+                            : "bg-slate-800/40 border border-white/5 text-white hover:bg-slate-700 active:bg-cyan-500/20 active:border-cyan-500/50"
+                        )}
                     >
                         {k}
                     </button>

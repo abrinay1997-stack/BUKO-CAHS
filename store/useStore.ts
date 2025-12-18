@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Transaction, Wallet, Category, RecurringRule, Budget, INITIAL_CATEGORIES, INITIAL_WALLETS } from '../types';
-import { generateId, sanitizeAmount } from '../utils/formatting';
+import { generateId, sanitizeAmount, getLocalDateTimeString } from '../utils/formatting';
 import { applyTransactionToWallets, revertTransactionFromWallets, processRecurringRules } from '../utils/financeCore';
 
 interface StoreState {
@@ -67,7 +67,26 @@ export const useStore = create<StoreState>()(
       setBiometricsEnabled: (enabled) => set({ isBiometricsEnabled: enabled }),
 
       addTransaction: (txData) => {
-        const newTx: Transaction = { id: generateId(), ...txData, date: txData.date || new Date().toISOString() };
+        const state = get();
+
+        // BUG FIX #3: Validar saldo disponible antes de crear gastos/transfers
+        if (txData.type === 'expense' || txData.type === 'transfer') {
+          const wallet = state.wallets.find(w => w.id === txData.walletId);
+          if (!wallet) {
+            throw new Error('Cuenta no encontrada');
+          }
+          if (wallet.balance < txData.amount) {
+            throw new Error('Saldo insuficiente en la cuenta seleccionada');
+          }
+        }
+
+        // BUG FIX #4: Usar timezone-safe date en lugar de toISOString()
+        const newTx: Transaction = {
+          id: generateId(),
+          ...txData,
+          date: txData.date || getLocalDateTimeString()
+        };
+
         set((state) => ({
           transactions: [newTx, ...state.transactions],
           wallets: applyTransactionToWallets(state.wallets, newTx),
@@ -80,8 +99,21 @@ export const useStore = create<StoreState>()(
         set((state) => {
           const oldTx = state.transactions.find(t => t.id === id);
           if (!oldTx) return state;
+
           const walletsAfterRevert = revertTransactionFromWallets(state.wallets, oldTx);
           const newTx: Transaction = { ...oldTx, ...updatedData };
+
+          // BUG FIX #7: Validar saldo disponible al editar gastos/transfers
+          if (newTx.type === 'expense' || newTx.type === 'transfer') {
+            const wallet = walletsAfterRevert.find(w => w.id === newTx.walletId);
+            if (!wallet) {
+              throw new Error('Cuenta no encontrada');
+            }
+            if (wallet.balance < newTx.amount) {
+              throw new Error('Saldo insuficiente para esta modificación');
+            }
+          }
+
           const finalWallets = applyTransactionToWallets(walletsAfterRevert, newTx);
           return { transactions: state.transactions.map(t => t.id === id ? newTx : t), wallets: finalWallets, isSyncing: true };
         });

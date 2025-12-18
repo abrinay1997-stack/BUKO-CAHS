@@ -2,19 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import GlassCard from '../components/ui/GlassCard';
-import { Trash, AlertTriangle, FileSpreadsheet, Lock, Unlock, Tag, Wallet, ChevronRight, Target, Cloud, UserCircle, LogOut, Fingerprint, Activity } from 'lucide-react';
+import { Trash, AlertTriangle, FileSpreadsheet, Lock, Unlock, Tag, Wallet, ChevronRight, Target, Cloud, UserCircle, LogOut, Fingerprint } from 'lucide-react';
 import { generateCSV, cn } from '../utils/formatting';
 import WalletManager from '../components/modals/WalletManager';
 import CategoryManager from '../components/modals/CategoryManager';
 import BudgetManager from '../components/modals/BudgetManager';
 import SecurityLock from '../components/SecurityLock';
-import SpeedTestModal from '../components/modals/SpeedTestModal';
 import { isBiometricsSupported, registerBiometrics } from '../utils/biometrics';
 
 const Settings: React.FC = () => {
   const { resetStore, wallets, transactions, categories, budgets, securityPin, setSecurityPin, user, isBiometricsEnabled, setBiometricsEnabled } = useStore();
   const [showPinSetup, setShowPinSetup] = useState(false);
-  const [activeModal, setActiveModal] = useState<'none' | 'categories' | 'wallets' | 'budgets' | 'speedtest'>('none');
+  const [activeModal, setActiveModal] = useState<'none' | 'categories' | 'wallets' | 'budgets'>('none');
   const [biometricsAvailable, setBiometricsAvailable] = useState(false);
 
   useEffect(() => {
@@ -26,7 +25,7 @@ const Settings: React.FC = () => {
   }, []);
   
   const handleReset = () => {
-    if (window.confirm("¿Estás absolutamente seguro? Se eliminarán tus datos locales y la sesión. Los datos en la nube permanecerán vinculados a tu cuenta.")) {
+    if (window.confirm("⚠️ ADVERTENCIA: Se eliminarán TODOS tus datos de forma PERMANENTE. Esta acción NO se puede deshacer. Los datos NO están respaldados en la nube.")) {
         resetStore();
         window.location.reload();
     }
@@ -74,22 +73,22 @@ const Settings: React.FC = () => {
           />
       )}
 
-      {/* Cloud Account Card */}
-      <GlassCard className="p-5 flex items-center justify-between border-cyan-500/20 bg-cyan-500/5">
+      {/* Local Storage Warning */}
+      <GlassCard className="p-5 flex items-center justify-between border-amber-500/20 bg-amber-500/5">
         <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-cyan-400 border border-white/10 shadow-lg">
-                <UserCircle size={32} />
+            <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-amber-400 border border-white/10 shadow-lg">
+                <AlertTriangle size={32} />
             </div>
             <div>
-                <h3 className="font-black text-white text-sm tracking-tight">{user?.email || 'Usuario Cloud'}</h3>
+                <h3 className="font-black text-white text-sm tracking-tight">Almacenamiento Local</h3>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                    <Cloud size={10} className="text-emerald-400" />
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sincronización Activa</p>
+                    <AlertTriangle size={10} className="text-amber-400" />
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Solo en este dispositivo</p>
                 </div>
             </div>
         </div>
         <button onClick={resetStore} className="p-3 bg-slate-800 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors">
-            <LogOut size={20} />
+            <Trash size={20} />
         </button>
       </GlassCard>
 
@@ -134,21 +133,6 @@ const Settings: React.FC = () => {
            </div>
       </div>
 
-      {/* Cloud Performance Section */}
-      <div className="pt-2">
-          <h3 className="text-[10px] font-black text-slate-500 mb-3 ml-1 uppercase tracking-[0.2em]">Rendimiento Cloud</h3>
-          <GlassCard onClick={() => setActiveModal('speedtest')} className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/60 transition-colors group">
-              <div className="flex items-center gap-3">
-                  <div className="p-2 bg-cyan-500/10 text-cyan-400 rounded-lg"><Activity size={20} /></div>
-                  <div>
-                      <h4 className="font-bold text-slate-200 text-sm">Test de Sincronización</h4>
-                      <p className="text-[10px] text-slate-500 uppercase font-black">Analizar Latencia y Red</p>
-                  </div>
-              </div>
-              <ChevronRight size={18} className="text-slate-500 group-hover:text-white transition-colors" />
-          </GlassCard>
-      </div>
-
       {/* Management Buttons */}
       <div className="pt-4">
           <h3 className="text-[10px] font-black text-slate-500 mb-3 ml-1 uppercase tracking-[0.2em]">Configuración</h3>
@@ -182,7 +166,6 @@ const Settings: React.FC = () => {
       <CategoryManager isOpen={activeModal === 'categories'} onClose={() => setActiveModal('none')} />
       <WalletManager isOpen={activeModal === 'wallets'} onClose={() => setActiveModal('none')} />
       <BudgetManager isOpen={activeModal === 'budgets'} onClose={() => setActiveModal('none')} />
-      <SpeedTestModal isOpen={activeModal === 'speedtest'} onClose={() => setActiveModal('none')} />
 
       <div className="pt-4">
         <h3 className="text-[10px] font-black text-slate-500 mb-3 ml-1 uppercase tracking-[0.2em]">Datos</h3>
