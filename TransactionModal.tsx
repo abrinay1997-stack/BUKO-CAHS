@@ -56,7 +56,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({ isOpen, onClose, ed
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       
-      <GlassCard className="w-full sm:max-w-md rounded-t-3xl rounded-b-none sm:rounded-2xl bg-slate-900 border-white/10 max-h-[95dvh] overflow-y-auto pb-safe shadow-2xl custom-scrollbar overscroll-contain">
+      <GlassCard className="w-full sm:max-w-md rounded-t-3xl rounded-b-none sm:rounded-2xl bg-slate-900 border-white/10 max-h-[95dvh] overflow-y-auto pb-safe shadow-2xl overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="p-5">
           {/* Header */}
           <div className="flex justify-between items-center mb-4">
