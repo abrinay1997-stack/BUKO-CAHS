@@ -91,15 +91,16 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ isOpen, onClose }) =>
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
             {/* Backdrop: Desenfoque Gaussiano variable para jerarquía visual */}
-            <div 
-                className="absolute inset-0 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300" 
-                onClick={onClose} 
+            <div
+                className="absolute inset-0 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300"
+                onClick={onClose}
+                style={{ touchAction: 'none' }}
             />
             
-            <GlassCard className="w-full max-w-lg h-[80vh] flex flex-col relative bg-slate-900 border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] rounded-[2.5rem] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
-                
+            <GlassCard className="w-full max-w-lg h-[80vh] flex flex-col relative bg-slate-900 border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] rounded-[2.5rem] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 overflow-hidden">
+
                 {/* Header Atómico */}
                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-slate-900/40 backdrop-blur-2xl z-20 shrink-0">
                     <div className="flex items-center gap-4">
@@ -111,9 +112,10 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ isOpen, onClose }) =>
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1.5">Arquitectura de Datos</p>
                         </div>
                     </div>
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="w-10 h-10 flex items-center justify-center bg-slate-800/80 hover:bg-slate-700 rounded-full text-white transition-all active:scale-90"
+                        type="button"
                     >
                         <X size={20} />
                     </button>
@@ -123,7 +125,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ isOpen, onClose }) =>
                 <div className="px-8 pt-6 pb-2 shrink-0">
                     <div className="relative group">
                         <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors" size={16} />
-                        <input 
+                        <input
                             type="text"
                             placeholder="FILTRAR ETIQUETAS..."
                             value={searchFilter}
@@ -136,8 +138,8 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ isOpen, onClose }) =>
                 {/* Contenido con Scroll Aislado */}
                 <div
                     ref={scrollRef}
-                    className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-8 py-4 space-y-10 pb-12"
-                    style={{ WebkitOverflowScrolling: 'touch' }}
+                    className="flex-1 overflow-y-scroll overscroll-contain px-8 py-4 space-y-10 pb-12"
+                    style={{ WebkitOverflowScrolling: 'touch', minHeight: 0 }}
                 >
                     {/* Botón de Inserción Atómica */}
                     {!isCreating ? (

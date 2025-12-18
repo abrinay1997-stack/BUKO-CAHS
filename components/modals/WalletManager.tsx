@@ -101,20 +101,20 @@ const WalletManager: React.FC<WalletManagerProps> = ({ isOpen, onClose }) => {
 
     return createPortal(
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-            
-            <GlassCard className="w-full max-w-md max-h-[85vh] flex flex-col relative bg-slate-900 shadow-2xl border-white/10">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} style={{ touchAction: 'none' }} />
+
+            <GlassCard className="w-full max-w-md max-h-[85vh] flex flex-col relative bg-slate-900 shadow-2xl border-white/10 overflow-hidden">
                 <div className="flex justify-between items-center p-5 border-b border-white/5 shrink-0 bg-slate-900/80 backdrop-blur-xl z-20">
                     <div className="flex items-center gap-3 text-white">
                         <Landmark size={20} className="text-cyan-400" />
                         <h2 className="text-lg font-black tracking-tight uppercase">Mis Cuentas</h2>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-slate-400 transition-colors">
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-slate-400 transition-colors" type="button">
                         <X size={20} />
                     </button>
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="flex-1 overflow-y-scroll p-5 space-y-4 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch', minHeight: 0 }}>
                     {!showAddWallet ? (
                          <button 
                             onClick={() => setShowAddWallet(true)}
