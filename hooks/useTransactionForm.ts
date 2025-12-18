@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { TransactionType, Frequency, Transaction } from '../types';
+import { getLocalDateTimeString } from '../utils/formatting';
 
 interface UseTransactionFormProps {
   isOpen: boolean;
@@ -97,12 +98,20 @@ export const useTransactionForm = ({ isOpen, onClose, editTransaction }: UseTran
     if (type !== 'transfer' && !categoryId) return;
     if (type === 'transfer' && !transferToWalletId) return;
 
+    // BUG FIX #6: Validar que el amount sea mayor a cero
     const numAmount = parseFloat(amount);
+    if (!numAmount || numAmount <= 0) {
+      alert('El monto debe ser mayor a cero');
+      return;
+    }
+
     let finalDesc = description;
     const now = new Date();
     const [y, m, d] = date.split('-').map(Number);
     const dateObj = new Date(y, m - 1, d, now.getHours(), now.getMinutes());
-    const finalDateIso = dateObj.toISOString();
+
+    // BUG FIX #4: Usar timezone-safe date en lugar de toISOString()
+    const finalDateIso = getLocalDateTimeString(dateObj);
 
     if (!finalDesc) {
       if (type === 'transfer') {
@@ -124,30 +133,36 @@ export const useTransactionForm = ({ isOpen, onClose, editTransaction }: UseTran
       isBusiness: type === 'transfer' ? false : isBusiness
     };
 
-    if (editTransaction) {
-      updateTransaction(editTransaction.id, {
-        ...baseTx,
-        date: finalDateIso,
-      });
-    } else {
-      if (isRecurring) {
-        addRecurringRule({
-          ...baseTx,
-          categoryId: baseTx.categoryId || '',
-          nextDueDate: finalDateIso,
-          frequency,
-          autoPay,
-          reminderDays: 2,
-          originalDay: d // Use the day from the input date as anchor
-        });
-      } else {
-        addTransaction({
+    // Try to execute transaction, catch any validation errors from store
+    try {
+      if (editTransaction) {
+        updateTransaction(editTransaction.id, {
           ...baseTx,
           date: finalDateIso,
         });
+      } else {
+        if (isRecurring) {
+          addRecurringRule({
+            ...baseTx,
+            categoryId: baseTx.categoryId || '',
+            nextDueDate: finalDateIso,
+            frequency,
+            autoPay,
+            reminderDays: 2,
+            originalDay: d // Use the day from the input date as anchor
+          });
+        } else {
+          addTransaction({
+            ...baseTx,
+            date: finalDateIso,
+          });
+        }
       }
+      onClose();
+    } catch (error) {
+      // Show validation errors from store (e.g., insufficient balance)
+      alert(error instanceof Error ? error.message : 'Error al procesar la transacción');
     }
-    onClose();
   };
 
   return {

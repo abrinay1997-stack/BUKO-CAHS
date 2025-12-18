@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { Transaction } from '../types';
+import { extractDateFromDateTime } from '../utils/formatting';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -96,8 +97,9 @@ export const useDashboardData = () => {
   const groupedTransactions = useMemo(() => {
     const groups: Record<string, Transaction[]> = {};
     displayTransactions.forEach(tx => {
-        // Use ISO string split for consistent keying regardless of locale issues during grouping
-        const dateKey = new Date(tx.date).toISOString(); 
+        // BUG FIX #5: Extract just the date (YYYY-MM-DD) to group transactions by day
+        // instead of grouping by full datetime which would create separate groups for each hour
+        const dateKey = extractDateFromDateTime(tx.date);
         if (!groups[dateKey]) groups[dateKey] = [];
         groups[dateKey].push(tx);
     });
